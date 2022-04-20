@@ -1,60 +1,53 @@
 #include <cstring>
 #include <ctime>
 
+#include "algorithms.hpp"
 #include "on-disk-table.hpp"
 
-struct Person
+struct Customer
 {
-	char first_name[30];
-	char last_name[30];
+	int id;
+	char name[28];
+	char address[28];
 	int age;
 };
 
-struct PersonFirstName
+struct Product
 {
-	char first_name[30];
+	int id;
+	char name[28];
+	int price;
+};
 
-	PersonFirstName() {}
+struct Order
+{
+	int id;
+	int customer_id;
+	int product_id;
+	int amount;
+};
 
-	PersonFirstName(const char first_name[30])
-	{
-		strncpy(this->first_name, first_name, 30);
-	}
+struct ProductXOrder
+{
+	int product_id;
+	int order_id;
+	int customer_id;
+	int amount;
+	char name[28];
+	int price;
 };
 
 void
 clear()
 {
-	auto people = dbpp::OnDiskTable<Person>::open("people");
-	people.clear();
-}
+	auto customers = dbpp::OnDiskTable<Customer>::open("db/customers");
+	customers.clear();
 
-void
-fill()
-{
-	auto people = dbpp::OnDiskTable<Person>::open("people");
+	auto products = dbpp::OnDiskTable<Product>::open("db/products");
+	products.clear();
 
-	people.insert({ "John", "Howarth", 65 });
-	people.insert({ "Kieran", "Mistry", 72 });
-	people.insert({ "Louie", "Kent", 23 });
-	people.insert({ "Riley", "Craig", 45 });
-	people.insert({ "Oliver", "Macdonald", 74 });
-	people.insert({ "Scott", "Banks", 69 });
-	people.insert({ "Joe", "Dixon", 22 });
-	people.insert({ "Bradley", "Jenkins", 33 });
-	people.insert({ "Maisie", "Hartley", 43 });
-	people.insert({ "Abbie", "Barlow", 55 });
-
-	printf("%30s | %30s | %8s\n",
-		"First name", "Last name", "Age");
-	printf("------------------------------   ------------------------------"
-		"   --------\n");
-
-	for (const Person &person : people)
-	{
-		printf("%30s | %30s | %8d\n",
-			person.first_name, person.last_name, person.age);
-	}
+	auto orders = dbpp::OnDiskTable<Order>::open("db/orders");
+	orders.clear();
 }
 
 const static char rand_chars[] = "abcdefghijklmnopqrstuvwxyz";
@@ -73,89 +66,143 @@ create_rand_str(char *dst, size_t n)
 }
 
 void
-fill_humungous()
+fill()
 {
-	auto people = dbpp::OnDiskTable<Person>::open("people");
+	size_t customers_n;
+	std::cout << "How many customers? ";
+	std::cin >> customers_n;
 
-	for (size_t i = 0; i < (size_t) 1E6; i++)
+	auto customers = dbpp::OnDiskTable<Customer>::open("db/customers");
+
+	for (int i = 0; i < customers_n; i++)
 	{
-		Person p;
-		create_rand_str(p.first_name, sizeof(p.first_name));
-		create_rand_str(p.last_name, sizeof(p.last_name));
-		p.age = rand() % 100;
+		Customer customer;
+		customer.id = i;
+		create_rand_str(customer.name, sizeof(customer.name));
+		create_rand_str(customer.address, sizeof(customer.address));
+		customer.age = rand() % 100;
 
-		people.insert(p);
+		customers.insert(customer);
+	}
+
+	size_t products_n;
+	std::cout << "How many products? ";
+	std::cin >> products_n;
+
+	auto products = dbpp::OnDiskTable<Product>::open("db/products");
+
+	for (int i = 0; i < products_n; i++)
+	{
+		Product product;
+		product.id = i;
+		create_rand_str(product.name, sizeof(product.name));
+		product.price = rand() % 10000;
+
+		products.insert(product);
+	}
+
+	size_t orders_n;
+	std::cout << "How many orders? ";
+	std::cin >> orders_n;
+
+	auto orders = dbpp::OnDiskTable<Order>::open("db/orders");
+
+	for (int i = 0; i < orders_n; i++)
+	{
+		Order order;
+		order.id = i;
+		order.customer_id = rand() % customers_n;
+		order.product_id = rand() % products_n;
+		order.amount = rand() % 5;
+
+		orders.insert(order);
 	}
 }
 
 void
-filter()
+print_customers()
 {
-	auto people = dbpp::OnDiskTable<Person>::open("people");
+	auto customers = dbpp::OnDiskTable<Customer>::open("db/customers");
 
-	int age;
-	std::cout << "Enter max age: ";
-	std::cin >> age;
+	printf("%4s | %28s | %28s | %3s\n",
+		"ID", "Name", "Address", "Age");
+	std::cout << std::string(80, '-') << std::endl;
 
-	auto filtered_people = people.filter_into_memory([age](const Person &p)
+	for (const Customer &customer : customers)
 	{
-		return p.age <= age;
-	});
-
-	printf("%30s | %30s | %8s\n",
-		"First name", "Last name", "Age");
-	printf("------------------------------   ------------------------------"
-		"   --------\n");
-
-	for (const Person &person : filtered_people)
-	{
-		printf("%30s | %30s | %8d\n",
-			person.first_name, person.last_name, person.age);
+		printf("%4d | %28s | %28s | %3d\n",
+			customer.id, customer.name, customer.address, customer.age);
 	}
 }
 
 void
-filter_map()
+print_products()
 {
-	auto people = dbpp::OnDiskTable<Person>::open("people");
+	auto products = dbpp::OnDiskTable<Product>::open("db/products");
 
-	int age;
-	std::cout << "Enter max age: ";
-	std::cin >> age;
+	printf("%4s | %28s | %6s\n",
+		"ID", "Name", "Price");
+	std::cout << std::string(80, '-') << std::endl;
 
-	auto filtered_people = people.filter_map_into_memory<PersonFirstName>(
-		[age](const Person &p)
+	for (const Product &product : products)
+	{
+		printf("%4d | %28s | %6d\n",
+			product.id, product.name, product.price);
+	}
+}
+
+void
+print_orders()
+{
+	auto orders = dbpp::OnDiskTable<Order>::open("db/orders");
+
+	printf("%4s | %11s | %10s | %6s\n",
+		"ID", "Customer ID", "Product ID", "Amount");
+	std::cout << std::string(80, '-') << std::endl;
+
+	for (const Order &order : orders)
+	{
+		printf("%4d | %11d | %10d | %6d\n",
+			order.id, order.customer_id, order.product_id,
+			order.amount);
+	}
+}
+
+void
+join()
+{
+	auto products = dbpp::OnDiskTable<Product>::open("db/products");
+	auto orders = dbpp::OnDiskTable<Order>::open("db/orders");
+
+	auto joined = dbpp::bnl_join_into_disk<ProductXOrder, Product, Order>(
+		products, orders,
+		[](const Product &product, const Order &order)
 		{
-			return p.age <= age;
+			return product.id == order.product_id;
 		},
-		[](const Person &p)
+		[](const Product &product, const Order &order)
 		{
-			return PersonFirstName(p.first_name);
+			ProductXOrder pxo;
+
+			pxo.product_id = product.id;
+			pxo.order_id = order.id;
+			pxo.customer_id = order.customer_id;
+			pxo.amount = order.amount;
+			strcpy(pxo.name, product.name);
+			pxo.price = product.price;
+
+			return pxo;
 		});
 
-	printf("%30s\n", "First name");
-	printf("------------------------------\n");
+	printf("%8s | %11s | %10s | %6s | %28s | %6s\n",
+		"Order ID", "Customer ID", "Product ID", "Amount", "Name", "Price");
+	std::cout << std::string(80, '-') << std::endl;
 
-	for (const PersonFirstName &person_first_name : filtered_people)
+	for (const ProductXOrder &pxo : joined)
 	{
-		printf("%30s\n", person_first_name.first_name);
-	}
-}
-
-void
-print()
-{
-	auto people = dbpp::OnDiskTable<Person>::open("people");
-
-	printf("%30s | %30s | %8s\n",
-		"First name", "Last name", "Age");
-	printf("------------------------------   ------------------------------"
-		"   --------\n");
-
-	for (const Person &person : people)
-	{
-		printf("%30s | %30s | %8d\n",
-			person.first_name, person.last_name, person.age);
+		printf("%8d | %11d | %10d | %6d | %28s | %6d\n",
+			pxo.order_id, pxo.customer_id, pxo.product_id,
+			pxo.amount, pxo.name, pxo.price);
 	}
 }
 
@@ -163,10 +210,12 @@ int
 main(int argc, char **argv)
 {
 	srand(time(nullptr));
+	dbpp::io::ensure_dir("db");
 
 	if (argc < 2)
 	{
-		fprintf(stderr, "Usage: %s <clear|fill|fill-humungous|filter|filter-map|print>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <clear|fill|print-customers"
+			"|print-products|print-orders|join\n", argv[0]);
 		return 1;
 	}
 
@@ -178,21 +227,21 @@ main(int argc, char **argv)
 	{
 		fill();
 	}
-	else if (strcmp(argv[1], "fill-humungous") == 0)
+	else if (strcmp(argv[1], "print-customers") == 0)
 	{
-		fill_humungous();
+		print_customers();
 	}
-	else if (strcmp(argv[1], "filter") == 0)
+	else if (strcmp(argv[1], "print-products") == 0)
 	{
-		filter();
+		print_products();
 	}
-	else if (strcmp(argv[1], "filter-map") == 0)
+	else if (strcmp(argv[1], "print-orders") == 0)
 	{
-		filter_map();
+		print_orders();
 	}
-	else if (strcmp(argv[1], "print") == 0)
+	else if (strcmp(argv[1], "join") == 0)
 	{
-		print();
+		join();
 	}
 	else
 	{

@@ -116,6 +116,7 @@ struct File
 	 */
 	size_t
 	size()
+	const
 	{
 		struct stat st;
 		if (fstat(fd, &st) == -1)
@@ -148,6 +149,7 @@ struct File
 	 */
 	size_t
 	read_at(size_t offset, size_t size, void *buf)
+	const
 	{
 		// Seek to the given offset.
 
@@ -179,6 +181,7 @@ struct File
 	 */
 	void
 	read_entire_file(void *buf)
+	const
 	{
 		size_t size = this->size();
 
@@ -198,6 +201,7 @@ struct File
 	 */
 	std::string
 	read_string_at(size_t offset)
+	const
 	{
 		// Seek to the given offset.
 

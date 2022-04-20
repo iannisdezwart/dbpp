@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <type_traits>
 #include <unistd.h>
 #include <vector>
 
@@ -312,11 +313,11 @@ struct OnDiskTable
 		{
 			// Filter the rows by the predicate.
 
-			if (predicate(record))
+			if (filter(record))
 			{
 				// Map the rows using the mapping function.
 
-				table.insert(mapping(record));
+				table.insert(map(record));
 			}
 		}
 
@@ -341,7 +342,8 @@ struct OnDiskTable
 	/**
 	 * Iterator that iterates over all records of the table.
 	 */
-	struct Iterator
+	template <bool IsConst>
+	struct IteratorBase
 	{
 		// The phase of the iterator.
 		enum Phase
@@ -359,7 +361,7 @@ struct OnDiskTable
 		phase;
 
 		// Reference to the table.
-		OnDiskTable &table;
+		const OnDiskTable &table;
 
 		// The current position in the file.
 		size_t rows_file_pos;
@@ -377,7 +379,7 @@ struct OnDiskTable
 		 * Constructs an iterator that starts a the beginning of the
 		 * table.
 		 */
-		Iterator(OnDiskTable &table)
+		IteratorBase(const OnDiskTable &table)
 			: table(table),
 			  phase(ROWS_FILE),
 			  rows_file_pos(0)
@@ -391,7 +393,7 @@ struct OnDiskTable
 		/**
 		 * Constructs an iterator that points to the end of the table.
 		 */
-		Iterator(OnDiskTable &table, Phase phase)
+		IteratorBase(const OnDiskTable &table, Phase phase)
 			: table(table),
 			  phase(phase),
 			  block(nullptr) {}
@@ -399,7 +401,7 @@ struct OnDiskTable
 		/**
 		 * Copy constructor.
 		 */
-		Iterator(const Iterator &other)
+		IteratorBase(const IteratorBase &other)
 			: table(other.table),
 			  rows_file_pos(other.rows_file_pos),
 			  phase(other.phase),
@@ -415,7 +417,7 @@ struct OnDiskTable
 		/**
 		 * Destructor. Frees any existing block.
 		 */
-		~Iterator()
+		~IteratorBase()
 		{
 			if (phase == ROWS_FILE)
 			{
@@ -469,10 +471,22 @@ struct OnDiskTable
 		}
 
 		/**
-		 * Returns the next record in the table.
+		 * Returns a reference to the next record in the table.
 		 */
-		Record
+		template <bool T = true>
+		typename std::enable_if<T && !IsConst, Record &>::type
 		operator*()
+		{
+			return block[block_pos];
+		}
+
+		/**
+		 * Returns a read-only reference to the next record in
+		 * the table.
+		 */
+		const Record &
+		operator*()
+		const
 		{
 			return block[block_pos];
 		}
@@ -489,7 +503,7 @@ struct OnDiskTable
 		/**
 		 * Advances the iterator to the next record.
 		 */
-		Iterator &
+		IteratorBase &
 		operator++()
 		{
 			block_pos++;
@@ -522,11 +536,11 @@ struct OnDiskTable
 		/**
 		 * Advances the iterator to the next record.
 		 */
-		Iterator
+		IteratorBase
 		operator++(int)
 		const
 		{
-			Iterator old = *this;
+			IteratorBase old = *this;
 			operator++();
 			return old;
 		}
@@ -535,7 +549,7 @@ struct OnDiskTable
 		 * Returns whether two iterators are equal.
 		 */
 		bool
-		operator==(const Iterator &other)
+		operator==(const IteratorBase &other)
 		const
 		{
 			if (phase != other.phase)
@@ -561,7 +575,7 @@ struct OnDiskTable
 		 * Returns whether two iterators are unequal.
 		 */
 		bool
-		operator!=(const Iterator &other)
+		operator!=(const IteratorBase &other)
 		const
 		{
 			return !operator==(other);
@@ -571,7 +585,7 @@ struct OnDiskTable
 		 * Returns whether this iterator is less than another iterator.
 		 */
 		bool
-		operator<(const Iterator &other)
+		operator<(const IteratorBase &other)
 		const
 		{
 			if (phase != other.phase)
@@ -604,6 +618,9 @@ struct OnDiskTable
 		}
 	};
 
+	using Iterator = IteratorBase<false>;
+	using ConstIterator = IteratorBase<true>;
+
 	/**
 	 * Returns an iterator that points to the first record of the table.
 	 */
@@ -620,6 +637,27 @@ struct OnDiskTable
 	end()
 	{
 		return Iterator(*this, Iterator::END);
+	}
+
+	/**
+	 * Returns a read-only iterator that points to the first record of
+	 * the table.
+	 */
+	ConstIterator
+	begin()
+	const
+	{
+		return ConstIterator(*this);
+	}
+
+	/**
+	 * Returns a read-only iterator that points to the end of the table.
+	 */
+	ConstIterator
+	end()
+	const
+	{
+		return ConstIterator(*this, ConstIterator::END);
 	}
 };
 
