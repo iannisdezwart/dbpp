@@ -333,7 +333,7 @@ struct OnDiskTable
 		// Read the entire rows file into an in-memory table.
 
 		InMemoryTable<Record> table;
-		table.rows.reserve(rows_file.size());
+		table.rows.resize(rows_file.size() / sizeof(Record));
 		rows_file.read_entire_file(table.rows.data());
 
 		return table;

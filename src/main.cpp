@@ -1,7 +1,7 @@
 #include <cstring>
 #include <ctime>
 
-#include "algorithms.hpp"
+#include "table-algorithms.hpp"
 #include "on-disk-table.hpp"
 
 struct Customer

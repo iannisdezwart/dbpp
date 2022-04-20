@@ -64,6 +64,27 @@ struct InMemoryTable
 	{
 		return rows.end();
 	}
+
+	/**
+	 * Returns a read-only iterator that points to the first record of
+	 * the table.
+	 */
+	typename std::vector<Record>::const_iterator
+	begin()
+	const
+	{
+		return rows.begin();
+	}
+
+	/**
+	 * Returns a read-only iterator that points to the end of the table.
+	 */
+	typename std::vector<Record>::const_iterator
+	end()
+	const
+	{
+		return rows.end();
+	}
 };
 
 }
