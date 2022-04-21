@@ -7,6 +7,9 @@
 #define PRODUCTS_PATH "/tmp/test-products"
 #define ORDERS_PATH "/tmp/test-orders"
 
+namespace table_algorithm_tests
+{
+
 struct Product
 {
 	int id;
@@ -301,7 +304,7 @@ equals_disk_mem()
 	ASSERT_EQ(a, b);
 }
 
-TEST_SEQUENCE(TableAlgorithms_tests, {
+TEST_SEQUENCE(table_algorithms, {
 	bnl_join_disk_disk_into_disk,
 	bnl_join_mem_mem_into_disk,
 	bnl_join_disk_mem_into_disk,
@@ -315,3 +318,5 @@ TEST_SEQUENCE(TableAlgorithms_tests, {
 	equals_disk_mem,
 	equals_mem_disk
 });
+
+}

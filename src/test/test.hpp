@@ -159,17 +159,17 @@ stop_timer()
 
 	if (time_diff_us <= 10000)
 	{
-		printf(ANSI_LIGHT_MAGENTA "took %zu microseconds"
+		printf(ANSI_LIGHT_MAGENTA "took %zu μs"
 			ANSI_RESET ".\n", time_diff_us);
 	}
 	else if (time_diff_us <= 10000000)
 	{
-		printf(ANSI_LIGHT_MAGENTA "took %.1f milliseconds"
+		printf(ANSI_LIGHT_MAGENTA "took %.1f ms"
 			ANSI_RESET ".\n", (float) time_diff_us / 1E3);
 	}
 	else
 	{
-		printf(ANSI_LIGHT_MAGENTA "took %.2f seconds"
+		printf(ANSI_LIGHT_MAGENTA "took %.2f s"
 			ANSI_RESET ".\n", (float) time_diff_us / 1E6);
 	}
 }
@@ -226,13 +226,13 @@ test_single_sequence(TestSequence &sequence)
 	{
 		printf(ANSI_CYAN "=> " ANSI_BOLD "%s" ANSI_RESET ": "
 			ANSI_LIGHT_GREEN "All %zu tests passed" ANSI_RESET
-			"!\n", sequence.name.c_str(), sequence.tests.size());
+			"!\n\n", sequence.name.c_str(), sequence.tests.size());
 	}
 	else
 	{
 		printf(ANSI_CYAN "=> " ANSI_BOLD "%s" ANSI_RESET ": "
 			ANSI_LIGHT_RED "%zu/%zu tests passed" ANSI_RESET
-			".\n", sequence.name.c_str(), sequence.passed_tests,
+			".\n\n", sequence.name.c_str(), sequence.passed_tests,
 			sequence.tests.size());
 	}
 }
