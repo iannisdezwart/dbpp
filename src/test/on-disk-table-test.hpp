@@ -1,6 +1,5 @@
-#include <string>
+#pragma once
 
-#define TEST_VERBOSE
 #include "test.hpp"
 #include "../on-disk-table.hpp"
 

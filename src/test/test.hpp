@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 #include <cstdio>
 #include <functional>
@@ -55,9 +57,9 @@ assert_impl(bool condition, const char *condition_str, const char *file,
 #define ASSERT_EQ(result, expected) assert_eq_impl(result, expected, \
 	#result, #expected, __FILE__, __LINE__)
 
-template <typename T>
+template <typename T, typename U>
 void
-assert_eq_impl(const T &result, const T &expected, const char *result_str,
+assert_eq_impl(const T &result, const U &expected, const char *result_str,
 	const char *expected_str, const char *file, int line)
 {
 	if (result == expected)

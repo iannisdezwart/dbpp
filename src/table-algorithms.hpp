@@ -352,7 +352,7 @@ bnl_join_into_memory(
  */
 template <typename OutRecord, typename InRecordA, typename InRecordB>
 InMemoryTable<OutRecord>
-bnl_join_into_disk(
+bnl_join_into_memory(
 	const OnDiskTable<InRecordA> &a,
 	const InMemoryTable<InRecordB> &b,
 	std::function<bool(const InRecordA &, const InRecordB &)> filter =
@@ -386,6 +386,145 @@ bnl_join_into_disk(
 	}
 
 	return out;
+}
+
+/**
+ * Checks whether two in-memory tables have equal contents.
+ *
+ * @param a The first table.
+ * @param b The second table.
+ */
+template <typename Record>
+bool
+operator==(const InMemoryTable<Record> &a, const InMemoryTable<Record> &b)
+{
+	// If the tables have different sizes, they are not equal.
+
+	if (a.size() != b.size())
+	{
+		return false;
+	}
+
+	// Iterate over the rows of both tables.
+
+	auto it1 = a.begin();
+	auto it2 = b.begin();
+
+	while (it1 != a.end() && it2 != b.end())
+	{
+		// If the rows are not equal, the tables are not equal.
+
+		if (!(*it1 == *it2))
+		{
+			return false;
+		}
+
+		// Advance to the next rows.
+
+		++it1;
+		++it2;
+	}
+
+	// The tables are equal.
+
+	return true;
+}
+
+/**
+ * Checks whether two on-disk tables have equal contents.
+ *
+ * @param a The first table.
+ * @param b The second table.
+ */
+template <typename Record>
+bool
+operator==(const OnDiskTable<Record> &a, const OnDiskTable<Record> &b)
+{
+	// If the tables have different sizes, they are not equal.
+
+	if (a.size() != b.size())
+	{
+		return false;
+	}
+
+	// Iterate over the rows of both tables.
+
+	auto it1 = a.begin();
+	auto it2 = b.begin();
+
+	while (it1 != a.end() && it2 != b.end())
+	{
+		// If the rows are not equal, the tables are not equal.
+
+		if (!(*it1 == *it2))
+		{
+			return false;
+		}
+
+		// Advance to the next rows.
+
+		++it1;
+		++it2;
+	}
+
+	// The tables are equal.
+
+	return true;
+}
+
+/**
+ * Checks whether an in-memory table and an on-disk table have equal contents.
+ *
+ * @param a The in-memory table.
+ * @param b The on-disk table.
+ */
+template <typename Record>
+bool
+operator==(const InMemoryTable<Record> &a, const OnDiskTable<Record> &b)
+{
+	// If the tables have different sizes, they are not equal.
+
+	if (a.size() != b.size())
+	{
+		return false;
+	}
+
+	// Iterate over the rows of both tables.
+
+	auto it1 = a.begin();
+	auto it2 = b.begin();
+
+	while (it1 != a.end() && it2 != b.end())
+	{
+		// If the rows are not equal, the tables are not equal.
+
+		if (!(*it1 == *it2))
+		{
+			return false;
+		}
+
+		// Advance to the next rows.
+
+		++it1;
+		++it2;
+	}
+
+	// The tables are equal.
+
+	return true;
+}
+
+/**
+ * Checks whether an on-disk table and an in-memory table have equal contents.
+ *
+ * @param a The on-disk table.
+ * @param b The in-memory table.
+ */
+template <typename Record>
+bool
+operator==(const OnDiskTable<Record> &a, const InMemoryTable<Record> &b)
+{
+	return b == a;
 }
 
 };
