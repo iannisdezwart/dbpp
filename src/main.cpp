@@ -35,6 +35,24 @@ struct ProductXOrder
 	int amount;
 	char name[28];
 	int price;
+
+	ProductXOrder() {}
+
+	ProductXOrder(const Product &product, const Order &order)
+	{
+		product_id = product.id;
+		order_id = order.id;
+		customer_id = order.customer_id;
+		amount = order.amount;
+		strcpy(name, product.name);
+		price = product.price;
+	}
+
+	static bool
+	is_match(const Product &product, const Order &order)
+	{
+		return order.product_id == product.id;
+	}
 };
 
 void
@@ -174,25 +192,8 @@ join()
 	auto products = dbpp::OnDiskTable<Product>::open("db/products");
 	auto orders = dbpp::OnDiskTable<Order>::open("db/orders");
 
-	auto joined = dbpp::bnl_join_into_disk<ProductXOrder, Product, Order>(
-		products, orders,
-		[](const Product &product, const Order &order)
-		{
-			return product.id == order.product_id;
-		},
-		[](const Product &product, const Order &order)
-		{
-			ProductXOrder pxo;
-
-			pxo.product_id = product.id;
-			pxo.order_id = order.id;
-			pxo.customer_id = order.customer_id;
-			pxo.amount = order.amount;
-			strcpy(pxo.name, product.name);
-			pxo.price = product.price;
-
-			return pxo;
-		});
+	auto joined = dbpp::bnl_join_into_memory<ProductXOrder>(
+		products.read_into_memory(), orders.read_into_memory());
 
 	printf("%8s | %11s | %10s | %6s | %28s | %6s\n",
 		"Order ID", "Customer ID", "Product ID", "Amount", "Name", "Price");

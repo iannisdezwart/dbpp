@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <vector>
 
-#include "heap-controller.hpp"
 #include "in-memory-table.hpp"
 #include "io.hpp"
 
@@ -27,11 +26,11 @@ struct OnDiskTable
 	static const constexpr size_t BLOCK_SIZE
 		= ENTRIES_PER_BLOCK * sizeof(Record);
 
+	// The path of the root directory of the table.
+	std::string root_path;
+
 	// File that contains the rows of this table.
 	io::File rows_file;
-
-	// File that contains the heap of this table.
-	io::File heap_file;
 
 	// Buffer that holds pending writes to the rows file.
 	Record *rows_write_buffer = new Record[ENTRIES_PER_BLOCK];
@@ -43,33 +42,30 @@ struct OnDiskTable
 	// If it is, its open files will be deleted upon destruction.
 	bool temp = false;
 
-	// The heap controller of this table.
-	HeapController heap_controller;
+	OnDiskTable() {}
 
 	/**
 	 * Constructs an `OnDiskTable` object from the given files.
 	 *
+	 * @param root_path The path of the root directory of the table.
 	 * @param rows_file The file containing the rows of the table.
-	 * @param heap_file The file containing the heap of the table.
 	 * @param temp Whether this table is temporary.
 	 */
-	OnDiskTable(io::File rows_file, io::File heap_file,
+	OnDiskTable(const std::string &root_path, io::File rows_file,
 			bool temp = false)
-		: rows_file(rows_file),
-		  heap_file(heap_file),
-		  heap_controller(heap_file),
+		: root_path(root_path),
+		  rows_file(rows_file),
 		  temp(temp) {}
 
 	/**
 	 * Move constructor.
 	 */
 	OnDiskTable(OnDiskTable &&other)
-		: rows_file(other.rows_file),
-		  heap_file(other.heap_file),
+		: root_path(other.root_path),
+		  rows_file(other.rows_file),
 		  rows_write_buffer(other.rows_write_buffer),
 		  rows_write_buffer_size(other.rows_write_buffer_size),
-		  temp(other.temp),
-		  heap_controller(other.heap_controller)
+		  temp(other.temp)
 	{
 		other.rows_write_buffer = nullptr;
 	}
@@ -97,13 +93,11 @@ struct OnDiskTable
 		if (temp)
 		{
 			rows_file.clear();
-			heap_file.clear();
 		}
 
 		// Close the files.
 
 		rows_file.close();
-		heap_file.close();
 	}
 
 	/**
@@ -140,9 +134,8 @@ struct OnDiskTable
 		// Open all files and construct a `Table` object from them.
 
 		io::File rows_file = io::File::open_rw(path + "/rows");
-		io::File heap_file = io::File::open_rw(path + "/heap");
 
-		return OnDiskTable(rows_file, heap_file);
+		return OnDiskTable(path, rows_file);
 	}
 
 	/**
@@ -151,12 +144,21 @@ struct OnDiskTable
 	static OnDiskTable
 	create_temp()
 	{
-		// Create temp files for the rows and heap.
+		// Create a temp file for the rows.
 
 		io::File rows_file = io::File::create_temp();
-		io::File heap_file = io::File::create_temp();
 
-		return OnDiskTable(rows_file, heap_file, true);
+		return OnDiskTable("dummy", rows_file, true);
+	}
+
+	/**
+	 * Returns the number of records in this table.
+	 */
+	size_t
+	size()
+	{
+		return rows_file.size() / sizeof(Record)
+			+ rows_write_buffer_size;
 	}
 
 	/**
@@ -165,11 +167,18 @@ struct OnDiskTable
 	void
 	clear()
 	{
-		// Clear the rows file.
 		rows_file.clear();
+		rows_write_buffer_size = 0;
+	}
 
-		// Clear the heap file.
-		heap_file.clear();
+	/**
+	 * Removes the table from disk.
+	 */
+	void
+	remove()
+	{
+		rows_file.remove();
+		io::remove_dir(root_path);
 	}
 
 	/**
@@ -206,6 +215,32 @@ struct OnDiskTable
 		{
 			flush_write_buffer();
 		}
+	}
+
+	/**
+	 * Reads an entry from the table at the given index.
+	 */
+	Record
+	read(size_t index)
+	{
+		// Check if we need to read from the rows file or the write
+		// buffer.
+
+		size_t num_entries = rows_file.size() / sizeof(Record);
+
+		if (index >= num_entries)
+		{
+			// Read the entry from the write buffer.
+
+			return rows_write_buffer[index - num_entries];
+		}
+
+		// Read the entry from the rows file.
+
+		Record record;
+		rows_file.read_at(index * sizeof(Record), sizeof(Record), &record);
+
+		return record;
 	}
 
 	/**

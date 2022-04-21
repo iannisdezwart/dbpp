@@ -5,6 +5,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <unordered_map>
 #include <vector>
 
 #include "util.hpp"
@@ -27,12 +28,39 @@ ensure_dir(const std::string &path)
 }
 
 /**
+ * Checks if a file exists.
+ */
+inline bool
+file_exists(const std::string &path)
+{
+	struct stat sb;
+	return stat(path.c_str(), &sb) == 0;
+}
+
+/**
+ * Removes a directory.
+ */
+inline void
+remove_dir(const std::string &path)
+{
+	if (rmdir(path.c_str()) == -1)
+	{
+		die_errno("Could not remove directory %s", path.c_str());
+	}
+}
+
+/**
  * Represents an opened file, holding its file descriptor.
  */
 struct File
 {
+	// A mapping of file descriptors to file names.
+	inline static std::unordered_map<int, std::string> fd_to_path;
+
 	// The file descriptor of the file.
 	int fd;
+
+	File() {}
 
 	/**
 	 * Initialises a `File` object given an open file descriptor.
@@ -40,24 +68,31 @@ struct File
 	File(int fd) : fd(fd) {}
 
 	/**
+	 * Copies a file descriptor from another `File` object.
+	 */
+	File(const File &other) : fd(other.fd) {}
+
+	/**
+	 * Steals a file descriptor from another `File` object.
+	 */
+	File &
+	operator=(File &&other)
+	{
+		fd = other.fd;
+		other.fd = -1;
+		return *this;
+	}
+
+	/**
 	 * Closes the file.
 	 */
 	void
 	close()
 	{
-		::close(fd);
-	}
-
-	/**
-	 * Creates a human readable representation of a `File`.
-	 */
-	std::string
-	to_string()
-	const
-	{
-		char buf[1024];
-		snprintf(buf, sizeof(buf), "File @%p { fd = %d }", this, fd);
-		return std::string(buf);
+		if (fd != -1)
+		{
+			::close(fd);
+		}
 	}
 
 	/**
@@ -77,6 +112,10 @@ struct File
 		{
 			die_errno("Could not open file %s", path.c_str());
 		}
+
+		// Store the file path.
+
+		fd_to_path[fd] = path;
 
 		return File(fd);
 	}
@@ -108,7 +147,20 @@ struct File
 			die_errno("Could not create temporary file");
 		}
 
+		// Store the file path.
+
+		fd_to_path[fd] = file_name;
+
 		return File(fd);
+	}
+
+	/**
+	 * Checks if the file still exists.
+	 */
+	bool
+	exists()
+	{
+		return file_exists(fd_to_path[fd]);
 	}
 
 	/**
@@ -128,6 +180,15 @@ struct File
 	}
 
 	/**
+	 * Returns the path of the file.
+	 */
+	const std::string &
+	get_path()
+	{
+		return fd_to_path[fd];
+	}
+
+	/**
 	 * Truncates the file to zero length, effectively clearing it.
 	 */
 	void
@@ -136,6 +197,19 @@ struct File
 		if (ftruncate(fd, 0) == -1)
 		{
 			die_errno("Could not truncate file");
+		}
+	}
+
+	/**
+	 * Removes the file from disk.
+	 */
+	void
+	remove()
+	{
+		if (unlink(fd_to_path[fd].c_str()) == -1)
+		{
+			die_errno("Could not remove file %s",
+				fd_to_path[fd].c_str());
 		}
 	}
 
@@ -151,18 +225,7 @@ struct File
 	read_at(size_t offset, size_t size, void *buf)
 	const
 	{
-		// Seek to the given offset.
-
-		if (lseek(fd, offset, SEEK_SET) == -1)
-		{
-			// TODO: Handle.
-
-			die_errno("Could not read from offset %lu", offset);
-		}
-
-		// Read the given number of bytes.
-
-		ssize_t bytes_read = ::read(fd, buf, size);
+		ssize_t bytes_read = pread(fd, buf, size, offset);
 
 		if (bytes_read == -1)
 		{
@@ -257,7 +320,7 @@ struct File
 
 		// Write the bytes.
 
-		if (::write(fd, data, size) == -1)
+		if (write(fd, data, size) == -1)
 		{
 			// TODO: Handle.
 
