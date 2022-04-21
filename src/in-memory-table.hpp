@@ -28,6 +28,12 @@ struct InMemoryTable
 		: rows(rows) {}
 
 	/**
+	 * Move constructor.
+	 */
+	InMemoryTable(InMemoryTable &&other)
+		: rows(std::move(other.rows)) {}
+
+	/**
 	 * Converts the table to a human-readable string.
 	 */
 	friend std::ostream &
@@ -80,6 +86,132 @@ struct InMemoryTable
 	insert(Record &&row)
 	{
 		rows.push_back(std::move(row));
+	}
+
+	/**
+	 * Reads an entry from the table at the given index.
+	 */
+	Record &
+	read(size_t index)
+	{
+		return rows[index];
+	}
+
+	/**
+	 * Filters the table using the given predicate.
+	 *
+	 * @param filter The filter function to use.
+	 * @returns An `InMemoryTable` containing the filtered rows.
+	 */
+	InMemoryTable<Record>
+	filter_into_memory(std::function<bool(const Record &)> filter)
+	{
+		InMemoryTable<Record> table;
+
+		// Iterate over all rows in the table.
+
+		for (const Record &record : *this)
+		{
+			// Filter the rows by the predicate.
+
+			if (filter(record))
+			{
+				table.insert(record);
+			}
+		}
+
+		return table;
+	}
+
+	/**
+	 * Filters the table using the given predicate.
+	 *
+	 * @param filter The filter function to use.
+	 * @returns An `OnDiskTable` containing the filtered rows.
+	 */
+	template <typename OnDiskTableOfRecord>
+	OnDiskTableOfRecord
+	filter_into_disk(std::function<bool(const Record &)> filter)
+	{
+		OnDiskTableOfRecord table = OnDiskTableOfRecord::create_temp();
+
+		// Iterate over all rows in the table.
+
+		for (const Record &record : *this)
+		{
+			// Filter the rows by the predicate.
+
+			if (filter(record))
+			{
+				table.insert(record);
+			}
+		}
+
+		return table;
+	}
+
+	/**
+	 * Filters the table using the given predicate.
+	 * Then maps the rows using the given function.
+	 *
+	 * @param filter The filter function to use.
+	 * @param map The map function to use.
+	 * @returns An `InMemoryTable` containing the filter-mapped rows.
+	 */
+	template <typename OutRecord>
+	InMemoryTable<OutRecord>
+	filter_map_into_memory(std::function<bool(const Record &)> filter,
+		std::function<OutRecord(const Record &)> map)
+	{
+		InMemoryTable<OutRecord> table;
+
+		// Iterate over all rows in the table.
+
+		for (const Record &record : *this)
+		{
+			// Filter the rows by the predicate.
+
+			if (filter(record))
+			{
+				// Map the rows using the mapping function.
+
+				table.insert(map(record));
+			}
+		}
+
+		return table;
+	}
+
+	/**
+	 * Filters the table using the given predicate.
+	 * Then maps the rows using the given function.
+	 *
+	 * @param filter The filter function to use.
+	 * @param map The map function to use.
+	 * @returns An `OnDiskTable` containing the filter-mapped rows.
+	 */
+	template <typename OnDiskTableOfOutRecord, typename OutRecord>
+	OnDiskTableOfOutRecord
+	filter_map_into_disk(std::function<bool(const Record &)> filter,
+		std::function<OutRecord(const Record &)> map)
+	{
+		auto table = OnDiskTableOfOutRecord::create_temp();
+
+		// Iterate over all rows in the table.
+
+		for (const Record &record : *this)
+		{
+			// Filter the rows by the predicate.
+
+			if (filter(record))
+			{
+				// Map the rows using the mapping function.
+
+				table.insert(map(record));
+			}
+		}
+
+		return table;
 	}
 
 	/**
