@@ -10,7 +10,7 @@ namespace dbpp
 	fprintf(stderr, "%s:%d: " fmt "\n", \
 		__FILE__, __LINE__, ##__VA_ARGS__); \
 	fprintf(stderr, "Errno: %s\n", strerror(errno)); \
-	abort(); \
+	throw std::runtime_error(""); \
 } while (false)
 
 // Letters that are allowed in a temporary file name.
