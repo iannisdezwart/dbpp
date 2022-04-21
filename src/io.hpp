@@ -68,9 +68,19 @@ struct File
 	File(int fd) : fd(fd) {}
 
 	/**
+	 * Steals a file descriptor from another `File` object.
+	 */
+	File(File &&other)
+		: fd(other.fd)
+	{
+		other.fd = -1;
+	}
+
+	/**
 	 * Copies a file descriptor from another `File` object.
 	 */
-	File(const File &other) : fd(other.fd) {}
+	File(const File &other)
+		: fd(other.fd) {}
 
 	/**
 	 * Steals a file descriptor from another `File` object.
@@ -81,6 +91,26 @@ struct File
 		fd = other.fd;
 		other.fd = -1;
 		return *this;
+	}
+
+	/**
+	 * Copies a file descriptor from another `File` object.
+	 */
+	File &
+	operator=(const File &other)
+	{
+		fd = other.fd;
+		return *this;
+	}
+
+	/**
+	 * Converts the `File` object to a human-readable string.
+	 */
+	friend std::ostream &
+	operator<<(std::ostream &os, const File &file)
+	{
+		os << "File { fd = " << file.fd << " }";
+		return os;
 	}
 
 	/**

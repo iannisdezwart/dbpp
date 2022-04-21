@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 namespace dbpp
@@ -19,6 +20,40 @@ struct InMemoryTable
 	 * Constructs an `InMemoryTable` object.
 	 */
 	InMemoryTable() {}
+
+	/**
+	 * Constructs an `InMemoryTable` object with the given rows.
+	 */
+	InMemoryTable(const std::vector<Record> &rows)
+		: rows(rows) {}
+
+	/**
+	 * Converts the table to a human-readable string.
+	 */
+	friend std::ostream &
+	operator<<(std::ostream &os, const InMemoryTable &table)
+	{
+		os << std::string("InMemoryTable { rows = [ ");
+
+		for (const Record &record : table.rows)
+		{
+			os << record << ", ";
+		}
+
+		os << std::string("] }");
+
+		return os;
+	}
+
+	/**
+	 * Returns the number of records in this table.
+	 */
+	size_t
+	size()
+	const
+	{
+		return rows.size();
+	}
 
 	/**
 	 * Clears the table, removing all rows.

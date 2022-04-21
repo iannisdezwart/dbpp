@@ -62,7 +62,7 @@ struct OnDiskTable
 	 */
 	OnDiskTable(OnDiskTable &&other)
 		: root_path(other.root_path),
-		  rows_file(other.rows_file),
+		  rows_file(std::move(other.rows_file)),
 		  rows_write_buffer(other.rows_write_buffer),
 		  rows_write_buffer_size(other.rows_write_buffer_size),
 		  temp(other.temp)
@@ -75,6 +75,14 @@ struct OnDiskTable
 	 */
 	~OnDiskTable()
 	{
+		// If the file has been stolen, that means the table was
+		// `std::move`d and we shouldn't do anything.
+
+		if (rows_file.fd == -1)
+		{
+			return;
+		}
+
 		// Flush pending writes to the rows file.
 
 		if (!temp && rows_write_buffer_size > 0)
@@ -98,6 +106,25 @@ struct OnDiskTable
 		// Close the files.
 
 		rows_file.close();
+	}
+
+	/**
+	 * Converts the table to a human-readable string.
+	 */
+	friend std::ostream &
+	operator<<(std::ostream &os, const OnDiskTable &table)
+	{
+		os << "OnDiskTable { root_path = " << table.root_path
+			<< ", rows = [ ";
+
+		for (const Record &record : table)
+		{
+			os << record << " ";
+		}
+
+		os << std::string("] }");
+
+		return os;
 	}
 
 	/**
@@ -156,6 +183,7 @@ struct OnDiskTable
 	 */
 	size_t
 	size()
+	const
 	{
 		return rows_file.size() / sizeof(Record)
 			+ rows_write_buffer_size;
