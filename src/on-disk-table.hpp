@@ -277,8 +277,9 @@ struct OnDiskTable
 	 * @param filter The filter function to use.
 	 * @returns An `InMemoryTable` containing the filtered rows.
 	 */
+	template <typename Filter>
 	InMemoryTable<Record>
-	filter_into_memory(std::function<bool(const Record &)> filter)
+	filter_into_memory(Filter filter)
 	{
 		InMemoryTable<Record> table;
 
@@ -303,8 +304,9 @@ struct OnDiskTable
 	 * @param filter The filter function to use.
 	 * @returns An `OnDiskTable` containing the filtered rows.
 	 */
+	template <typename Filter>
 	OnDiskTable<Record>
-	filter_into_disk(std::function<bool(const Record &)> filter)
+	filter_into_disk(Filter filter)
 	{
 		OnDiskTable<Record> table = create_temp();
 
@@ -331,10 +333,9 @@ struct OnDiskTable
 	 * @param map The map function to use.
 	 * @returns An `InMemoryTable` containing the filter-mapped rows.
 	 */
-	template <typename OutRecord>
+	template <typename OutRecord, typename Filter, typename Map>
 	InMemoryTable<OutRecord>
-	filter_map_into_memory(std::function<bool(const Record &)> filter,
-		std::function<OutRecord(const Record &)> map)
+	filter_map_into_memory(Filter filter, Map map)
 	{
 		InMemoryTable<OutRecord> table;
 
@@ -363,10 +364,9 @@ struct OnDiskTable
 	 * @param map The map function to use.
 	 * @returns An `OnDiskTable` containing the filter-mapped rows.
 	 */
-	template <typename OutRecord>
+	template <typename OutRecord, typename Filter, typename Map>
 	OnDiskTable<OutRecord>
-	filter_map_into_disk(std::function<bool(const Record &)> filter,
-		std::function<OutRecord(const Record &)> map)
+	filter_map_into_disk(Filter filter, Map map)
 	{
 		auto table = OnDiskTable<OutRecord>::create_temp();
 

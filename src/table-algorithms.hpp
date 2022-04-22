@@ -1,9 +1,8 @@
 #pragma once
 
-#include <functional>
-
 #include "in-memory-table.hpp"
 #include "on-disk-table.hpp"
+#include "predicates.hpp"
 
 namespace dbpp
 {
@@ -17,18 +16,15 @@ namespace dbpp
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 OnDiskTable<OutRecord>
 bnl_join_into_disk(
 	const OnDiskTable<InRecordA> &a,
 	const OnDiskTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create a temporary output table.
 
@@ -64,18 +60,15 @@ bnl_join_into_disk(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 OnDiskTable<OutRecord>
 bnl_join_into_disk(
 	const InMemoryTable<InRecordA> &a,
 	const InMemoryTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create a temporary output table.
 
@@ -112,18 +105,15 @@ bnl_join_into_disk(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 OnDiskTable<OutRecord>
 bnl_join_into_disk(
 	const InMemoryTable<InRecordA> &a,
 	const OnDiskTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create a temporary output table.
 
@@ -160,18 +150,15 @@ bnl_join_into_disk(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 OnDiskTable<OutRecord>
 bnl_join_into_disk(
 	const OnDiskTable<InRecordA> &a,
 	const InMemoryTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create a temporary output table.
 
@@ -207,18 +194,15 @@ bnl_join_into_disk(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 InMemoryTable<OutRecord>
 bnl_join_into_memory(
 	const OnDiskTable<InRecordA> &a,
 	const OnDiskTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create an output table.
 
@@ -254,18 +238,15 @@ bnl_join_into_memory(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 InMemoryTable<OutRecord>
 bnl_join_into_memory(
 	const InMemoryTable<InRecordA> &a,
 	const InMemoryTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create an output table.
 
@@ -302,18 +283,15 @@ bnl_join_into_memory(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 InMemoryTable<OutRecord>
 bnl_join_into_memory(
 	const InMemoryTable<InRecordA> &a,
 	const OnDiskTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create an output table.
 
@@ -350,18 +328,15 @@ bnl_join_into_memory(
  * @param filter The join filter function.
  * @param map The mapping function.
  */
-template <typename OutRecord, typename InRecordA, typename InRecordB>
+template <typename OutRecord, typename InRecordA, typename InRecordB,
+	typename Filter = predicates::IsMatch<OutRecord, InRecordA, InRecordB>,
+	typename Map = predicates::Map<OutRecord, InRecordA, InRecordB>>
 InMemoryTable<OutRecord>
 bnl_join_into_memory(
 	const OnDiskTable<InRecordA> &a,
 	const InMemoryTable<InRecordB> &b,
-	std::function<bool(const InRecordA &, const InRecordB &)> filter =
-		OutRecord::is_match,
-	std::function<OutRecord(const InRecordA &, const InRecordB &)> map =
-		[](const InRecordA &a, const InRecordB &b)
-		{
-			return OutRecord(a, b);
-		})
+	Filter filter = Filter(),
+	Map map = Map())
 {
 	// Create an output table.
 
