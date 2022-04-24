@@ -7,6 +7,9 @@
 namespace dbpp
 {
 
+template <typename Record>
+struct OnDiskTable;
+
 /**
  * Represents an in-memory stored table.
  * Provides methods to access content of the table.
@@ -131,7 +134,7 @@ struct InMemoryTable
 	 * @param filter The filter function to use.
 	 * @returns An `OnDiskTable` containing the filtered rows.
 	 */
-	template <typename OnDiskTableOfRecord, typename Filter>
+	template <typename Filter, typename OnDiskTableOfRecord = OnDiskTable<Record>>
 	OnDiskTableOfRecord
 	filter_into_disk(Filter filter)
 	{
@@ -191,8 +194,8 @@ struct InMemoryTable
 	 * @param map The map function to use.
 	 * @returns An `OnDiskTable` containing the filter-mapped rows.
 	 */
-	template <typename OnDiskTableOfOutRecord, typename OutRecord,
-		typename Filter, typename Map>
+	template <typename OutRecord, typename Filter, typename Map,
+		typename OnDiskTableOfOutRecord = OnDiskTable<OutRecord>>
 	OnDiskTableOfOutRecord
 	filter_map_into_disk(Filter filter, Map map)
 	{

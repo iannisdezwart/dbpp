@@ -4,6 +4,6 @@
 
 TEST_MAIN(
 	on_disk_table_tests::OnDiskTable,
-	table_algorithm_tests::table_algorithms,
-	in_memory_table_tests::InMemoryTable
+	in_memory_table_tests::InMemoryTable,
+	table_algorithm_tests::table_algorithms
 );

@@ -22,9 +22,11 @@ dirs:
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXX_FLAGS) -c $< -o $@
 
-.PHONY: test
 bin/test: dirs $(TEST_OBJ_FILES)
 	$(CXX) $(LD_FLAGS) $(TEST_OBJ_FILES) -o $@
+	bin/test
+
+test:
 	bin/test
 
 $(OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.cpp

@@ -63,8 +63,7 @@ filter_into_disk()
 {
 	auto table = create_table();
 
-	auto filtered_table = table.filter_into_disk<
-			dbpp::OnDiskTable<TestRecord>>(
+	auto filtered_table = table.filter_into_disk(
 		[](const TestRecord &record)
 		{
 			return record.age > 30;
@@ -102,8 +101,7 @@ filter_map_into_disk()
 {
 	auto table = create_table();
 
-	auto filtered_table = table.filter_map_into_disk<
-			dbpp::OnDiskTable<TestRecordProjection>, TestRecordProjection>(
+	auto filtered_table = table.filter_map_into_disk<TestRecordProjection>(
 		[](const TestRecord &record)
 		{
 			return record.age > 30;
